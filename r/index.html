@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A flight review on SkyReview</title>
+<meta name="description" content="Read this traveller's review on SkyReview — airline, route and plane reviews.">
+<meta property="og:title" content="A flight review on SkyReview">
+<meta property="og:description" content="Read what this traveller thought of their flight.">
+<meta name="apple-itunes-app" content="app-id=6820071651">
+<style>
+  :root { --bg:#f1f3f4; --card:#fff; --text:#202124; --sub:#5f6368; --line:#e8eaed; --blue:#1967d2; --star:#fbbc04; --off:#dadce0; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#121212; --card:#1e1f20; --text:#e8eaed; --sub:#9aa0a6; --line:#3c4043; --blue:#8ab4f8; --off:#5f6368; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width:560px; margin:0 auto; padding:24px 16px 40px; }
+  .brand { font-weight:800; font-size:22px; margin:0 0 18px; }
+  .brand span { color:var(--blue); }
+  .card { background:var(--card); border-radius:18px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .flight { display:flex; align-items:center; gap:12px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+  .flight img { width:64px; height:32px; object-fit:contain; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  .airline { font-weight:700; font-size:18px; }
+  .route { color:var(--sub); font-size:14px; }
+  .who { display:flex; align-items:center; gap:10px; margin-top:16px; }
+  .avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; background:#e8f0fe; color:#1967d2; display:flex; align-items:center; justify-content:center; font-weight:700; }
+  .name { font-weight:600; }
+  .stars { margin-top:10px; font-size:20px; letter-spacing:1px; }
+  .stars .on { color:var(--star); } .stars .off { color:var(--off); }
+  .date { color:var(--sub); font-size:14px; margin-left:6px; letter-spacing:0; }
+  .text { margin:10px 0 0; white-space:pre-wrap; }
+  .photos { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-top:14px; }
+  .photos img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; }
+  .actions { display:flex; flex-direction:column; gap:10px; margin-top:20px; }
+  .btn { display:block; text-align:center; padding:14px; border-radius:999px; font-weight:700; text-decoration:none; }
+  .primary { background:var(--blue); color:#fff; }
+  .secondary { border:1.5px solid var(--blue); color:var(--blue); }
+  .note { color:var(--sub); font-size:13px; text-align:center; margin-top:16px; }
+  .msg { color:var(--sub); text-align:center; padding:30px 0; }
+</style>
+</head>
+<body>
+<main>
+  <p class="brand">Sky<span>Review</span></p>
+  <div class="card" id="card"><p class="msg" id="msg">…</p></div>
+  <div class="actions">
+    <a class="btn primary" id="open" href="#">Open in SkyReview</a>
+    <a class="btn secondary" id="get" href="https://apps.apple.com/app/id6820071651">Get SkyReview on the App Store</a>
+  </div>
+  <p class="note" id="note"></p>
+</main>
+<script>
+// A shared review (?id=…), read from SkyReview's database with the public
+// key (Row Level Security only shows published reviews).
+const SUPABASE = 'https://rjehdzxreikrwpoghijh.supabase.co';
+const KEY = 'sb_publishable_ylOmzVbHN1uf20_T-DqJPw_dOnD-Xr1';
+const AIRLINES = {"klm":["KLM","KL"],"transavia":["Transavia","HV"],"vueling":["Vueling","VY"],"iberia":["Iberia","IB"],"volotea":["Volotea","V7"],"ryanair":["Ryanair","FR"],"easyjet":["easyJet","U2"],"ba":["British Airways","BA"],"lufthansa":["Lufthansa","LH"],"eurowings":["Eurowings","EW"],"airfrance":["Air France","AF"],"swiss":["SWISS","LX"],"tap":["TAP Air Portugal","TP"],"wizz":["Wizz Air","W6"],"aegean":["Aegean","A3"],"qatar":["Qatar Airways","QR"],"emirates":["Emirates","EK"],"ana":["ANA","NH"],"delta":["Delta","DL"],"united":["United","UA"]};
+const L = {
+  en: { open: 'Open in SkyReview', get: 'Get SkyReview on the App Store', missing: 'This review is no longer available.', reviews: (n) => n === 1 ? '1 review' : n + ' reviews', note: 'Rate airlines, routes and planes — and read what travellers really think.', flew: 'Flew' },
+  es: { open: 'Abrir en SkyReview', get: 'Descarga SkyReview en el App Store', missing: 'Esta reseña ya no está disponible.', reviews: (n) => n === 1 ? '1 reseña' : n + ' reseñas', note: 'Valora aerolíneas, rutas y aviones, y descubre qué opinan de verdad los viajeros.', flew: 'Vuelo de' },
+  nl: { open: 'Open in SkyReview', get: 'Download SkyReview in de App Store', missing: 'Deze review is niet meer beschikbaar.', reviews: (n) => n === 1 ? '1 review' : n + ' reviews', note: 'Beoordeel maatschappijen, routes en toestellen, en lees wat reizigers echt vinden.', flew: 'Gevlogen' },
+};
+const lang = (navigator.language || 'en').slice(0, 2);
+const T = L[lang] || L.en;
+document.documentElement.lang = L[lang] ? lang : 'en';
+const id = new URLSearchParams(location.search).get('id') || '';
+document.getElementById('open').textContent = T.open;
+document.getElementById('get').textContent = T.get;
+document.getElementById('note').textContent = T.note;
+document.getElementById('open').href = 'com.skyreview.app://review/' + id;
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = (d, o) => new Intl.DateTimeFormat(lang, o).format(d);
+
+async function load() {
+  const msg = document.getElementById('msg');
+  if (!/^[0-9a-f-]{36}$/i.test(id)) { msg.textContent = T.missing; return; }
+  try {
+    const url = SUPABASE + '/rest/v1/reviews?id=eq.' + id +
+      '&select=airline_id,origin,destination,flight_number,aircraft_model,stars,text,photos,created_at,flown_on,author:profiles!reviews_user_id_fkey(display_name,photo_url,review_count)';
+    const res = await fetch(url, { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } });
+    const [r] = await res.json();
+    if (!r) { msg.textContent = T.missing; return; }
+    const [airline, iata] = AIRLINES[r.airline_id] || [r.airline_id.toUpperCase(), (r.flight_number || '').slice(0, 2)];
+    const name = r.author?.display_name || 'Traveller';
+    const route = [r.origin && r.destination ? r.origin + ' → ' + r.destination : '', r.flight_number, r.aircraft_model,
+      r.flown_on ? T.flew + ' ' + fmt(new Date(r.flown_on + 'T12:00'), { month: 'short', year: 'numeric' }) : ''].filter(Boolean).join(' · ');
+    const avatar = r.author?.photo_url
+      ? '<img class="avatar" src="' + esc(r.author.photo_url) + '" alt="">'
+      : '<div class="avatar">' + esc(name.charAt(0).toUpperCase()) + '</div>';
+    const stars = [1, 2, 3, 4, 5].map((i) => '<span class="' + (i <= r.stars ? 'on' : 'off') + '">★</span>').join('');
+    const photos = (r.photos || []).slice(0, 6).map((p) => '<img src="' + esc(p) + '" alt="" loading="lazy">').join('');
+    document.title = airline + ' ' + route.split(' · ')[0] + ' — ' + r.stars + '★ on SkyReview';
+    document.getElementById('card').innerHTML =
+      '<div class="flight"><img src="https://pics.avs.io/240/120/' + esc(iata) + '.png" alt="">' +
+      '<div><div class="airline">' + esc(airline) + '</div><div class="route">' + esc(route) + '</div></div></div>' +
+      '<div class="who">' + avatar + '<div><div class="name">' + esc(name) + '</div><div class="route">' + esc(T.reviews(r.author?.review_count || 1)) + '</div></div></div>' +
+      '<div class="stars">' + stars + '<span class="date">' + esc(fmt(new Date(r.created_at), { day: 'numeric', month: 'short', year: 'numeric' })) + '</span></div>' +
+      (r.text ? '<p class="text">' + esc(r.text) + '</p>' : '') +
+      (photos ? '<div class="photos">' + photos + '</div>' : '');
+  } catch (e) {
+    msg.textContent = T.missing;
+  }
+}
+load();
+</script>
+</body>
+</html>
