@@ -76,11 +76,11 @@ async function load() {
   if (!/^[0-9a-f-]{36}$/i.test(id)) { msg.textContent = T.missing; return; }
   try {
     const url = SUPABASE + '/rest/v1/reviews?id=eq.' + id +
-      '&select=airline_id,origin,destination,flight_number,aircraft_model,stars,text,photos,created_at,flown_on,author:profiles!reviews_user_id_fkey(display_name,photo_url,review_count)';
+      '&select=airline_id,airline_name,origin,destination,flight_number,aircraft_model,stars,text,photos,created_at,flown_on,author:profiles!reviews_user_id_fkey(display_name,photo_url,review_count)';
     const res = await fetch(url, { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } });
     const [r] = await res.json();
     if (!r) { msg.textContent = T.missing; return; }
-    const [airline, iata] = AIRLINES[r.airline_id] || [r.airline_id.toUpperCase(), (r.flight_number || '').slice(0, 2)];
+    const [airline, iata] = AIRLINES[r.airline_id] || [r.airline_name || r.airline_id.toUpperCase(), r.airline_id.length === 2 ? r.airline_id.toUpperCase() : (r.flight_number || '').slice(0, 2)];
     const name = r.author?.display_name || 'Traveller';
     const route = [r.origin && r.destination ? r.origin + ' → ' + r.destination : '', r.flight_number, r.aircraft_model,
       r.flown_on ? T.flew + ' ' + fmt(new Date(r.flown_on + 'T12:00'), { month: 'short', year: 'numeric' }) : ''].filter(Boolean).join(' · ');
